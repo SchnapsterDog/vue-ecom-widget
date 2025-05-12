@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Widget Dev</title>
+  <style>body{margin:40px;font-family:sans-serif}</style>
+</head>
+<body>
+  <h1>Widget Dev (HMR)</h1>
+  <div id="my-ecom-widget" style="max-width:900px;margin:20px auto;"></div>
+
+  <!-- Single module script that both imports and calls init -->
+  <script type="module">
+    import init from '/src/main.js'
+
+    // Now that the module has loaded, call init:
+    init({
+      selector: '#my-ecom-widget',
+      category: 'electronics',
+      visibleCount: 5
+    })
+  </script>
+</body>
+</html>

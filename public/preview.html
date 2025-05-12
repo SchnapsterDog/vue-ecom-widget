@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Widget Preview</title>
+  <style>body{margin:40px;font-family:sans-serif}</style>
+</head>
+<body>
+  <h1>Widget Production Preview</h1>
+  <div id="my-ecom-widget" style="max-width:900px;margin:20px auto"></div>
+
+  <!-- PROD: only load the built bundle -->
+  <script src="/dist/widget.min.js"></script>
+  <script>
+    window.EcomWidget.init({
+      selector: '#my-ecom-widget',
+      category: 'electronics',
+      visibleCount: 5
+    });
+  </script>
+</body>
+</html>

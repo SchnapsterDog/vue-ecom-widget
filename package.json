@@ -1,0 +1,19 @@
+{
+  "name": "vue-ecom-widget",
+  "version": "1.0.0",
+  "description": "Embeddable Vue e-commerce carousel widget",
+  "main": "dist/widget.min.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.6.2",
+    "vite": "^5.0.0",
+    "vite-plugin-css-injected-by-js": "^3.5.2"
+  }
+}
