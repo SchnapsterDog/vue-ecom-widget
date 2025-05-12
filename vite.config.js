@@ -5,10 +5,18 @@ import { resolve } from 'path'
 
 export default defineConfig({
   publicDir: 'public',
-  plugins: [ vue(), cssInjectedByJs() ],
+  plugins: [
+    vue(),
+    cssInjectedByJs()
+  ],
   server: {
-    // Open the dev‐only index.html
     open: '/index.html'
+  },
+  define: {
+    'process.env': {}
+  },
+  preview: {
+    open: '/preview.html'
   },
   build: {
     outDir: 'dist',
@@ -19,6 +27,6 @@ export default defineConfig({
       fileName: () => 'widget.min.js',
       formats: ['iife']
     },
-    minify: 'esbuild' // or 'terser'
+    minify: 'esbuild'
   }
 })
