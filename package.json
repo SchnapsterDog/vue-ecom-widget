@@ -1,18 +1,48 @@
 {
   "name": "vue-ecom-widget",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Embeddable Vue e-commerce carousel widget",
   "main": "dist/widget.min.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "changelogen --release --minor && npm publish && git push --follow-tags"
   },
+  "author": {
+    "name": "Oliver Trajceski",
+    "email": "oliver@akrinum.com"
+  },
+  "bugs": {
+    "url": "https://github.com/SchnapsterDog/vue-ecom-widget/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SchnapsterDog/vue-ecom-widget"
+  },
+  "contributors": [
+    {
+      "name": "Oliver Trajceski (@schnapsterdog)"
+    }
+  ],
+  "keywords": [
+    "Vue Widget",
+    "Vue E-Com Widget",
+    "Embeddable",
+    "Embeddable Widget",
+    "Embeddable E-commerce Widget",
+    "E-commerce",
+    "javascript",
+    "vue",
+    "opensource"
+  ],
+  "license": "MIT",
   "dependencies": {
     "vue": "^3.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.6.2",
+    "changelogen": "^0.6.1",
     "vite": "^5.0.0",
     "vite-plugin-css-injected-by-js": "^3.5.2"
   }
