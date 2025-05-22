@@ -1,59 +1,93 @@
 <template>
   <div class="wrapper">
-    <button class="nav prev" @click="prev">&#10094;</button>
-    <div class="box">
+    <!-- HEADER WITH TABS -->
+    <header class="widget-header">
+      <div class="logo">Logo</div>
+      <nav class="widget-menu">
+        <button
+          v-for="tab in tabs"
+          :key="tab.value"
+          class="menu-item"
+          :class="{ active: tab.value === currentCategory }"
+          @click="changeCategory(tab.value)"
+        >
+          {{ tab.label }}
+        </button>
+      </nav>
+    </header>
+
+    <!-- CAROUSEL CONTROLS -->
+    <button class="nav prev" @click="prev" aria-label="Previous">&#10094;</button>
+
+    <!-- VIEWPORT -->
+    <div class="viewport">
       <div
-        class="items"
-        :style="itemsStyle"
+        class="track"
+        :style="{ transform: itemsStyle.transform, transition: itemsStyle.transition }"
         @transitionend="onTransitionEnd"
         ref="itemsContainer"
       >
-        <div class="item" v-for="(p, i) in loopItems" :key="`prod-${i}`">
-          <img :src="p.image" :alt="p.title" />
-          <div class="info">
-            <h4>{{ p.title }}</h4>
-            <p>${{ p.price }}</p>
-          </div>
-          <button class="btn" @click="addToCart($event, p)">
-            Add
-          </button>
+        <div
+          class="slide"
+          v-for="(p,i) in loopItems"
+          :key="i"
+          @click="openProduct(p)"
+        >
+          <img class="cover" :src="p.image" :alt="p.title" />
+          <h4 class="title">{{ p.title }}</h4>
+          <p class="price">$ {{ p.price.toFixed(2) }}</p>
+          <button class="btn" @click.stop="addToCart($event,p)">Add to Cart</button>
         </div>
       </div>
     </div>
-    <button class="nav next" @click="next">&#10095;</button>
+
+    <button class="nav next" @click="next" aria-label="Next">&#10095;</button>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, watch } from 'vue'
 
 const props = defineProps({
-  category: { type: String, default: 'electronics' },
-  visibleCount: { type: Number, default: 5 }
+  visibleCount: { type: Number, default: 1 }
 })
 
-const items = ref([])         // real data
-const loopItems = ref([])     // data with clones
-const idx = ref(props.visibleCount)
-const itemsContainer = ref(null)
+// --- CONFIG ---
+const WIDTH      = 400
+const HEIGHT     = 500
+const transitionSpeed = 400
 
-const transitionSpeed = 500
-const gap = 16
+// define your tabs and corresponding API categories
+const tabs = [
+  { label: 'Olive Oil',     value: 'electronics' },
+  { label: 'Vegeterrian',        value: 'jewelery' },
+  { label: "Cart",  value: "men's clothing" },
+]
+const currentCategory = ref(tabs[0].value)
 
-const itemsStyle = reactive({
-  transform: '',
-  transition: ''
-})
+// reactive state
+const items         = ref([])
+const loopItems     = ref([])
+const idx           = ref(props.visibleCount)
+const itemsStyle    = reactive({ transform: '', transition: '' })
 
-// move carousel to current idx
-function updateTransform() {
-  const firstCard = itemsContainer.value.children[0]
-  if (!firstCard) return
-  const cardWidth = firstCard.getBoundingClientRect().width + gap
-  itemsStyle.transform = `translateX(-${cardWidth * idx.value}px)`
+// fetch & prepare loop
+async function fetchProducts(category) {
+  const res  = await fetch(`https://fakestoreapi.com/products/category/${category}`)
+  const data = await res.json()
+  items.value = data
+  const head = data.slice(0, props.visibleCount)
+  const tail = data.slice(-props.visibleCount)
+  loopItems.value = [...tail, ...data, ...head]
+  idx.value = props.visibleCount
+  await nextTick()
+  updateTransform()
 }
 
-// handle snapping when clones are reached
+// transform logic
+function updateTransform() {
+  itemsStyle.transform = `translateX(-${WIDTH * idx.value}px)`
+}
 function onTransitionEnd() {
   const n = items.value.length
   itemsStyle.transition = ''
@@ -68,8 +102,6 @@ function onTransitionEnd() {
     updateTransform()
   }
 }
-
-// navigation
 function prev() {
   itemsStyle.transition = `transform ${transitionSpeed}ms ease`
   idx.value--
@@ -81,161 +113,152 @@ function next() {
   updateTransform()
 }
 
-// add-to-cart handler
+// add-to-cart
 function addToCart(e, p) {
   const btn = e.currentTarget
   btn.disabled = true
   btn.textContent = 'Adding…'
   fetch('https://fakestoreapi.com/carts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({
-      userId: 1,
+      userId:1,
       date: new Date().toISOString(),
-      products: [{ productId: p.id, quantity: 1 }]
+      products:[{ productId:p.id, quantity:1 }]
     })
   })
-    .then(() => { btn.textContent = 'Added!' })
-    .catch(() => {
-      btn.textContent = 'Error'
-      btn.disabled = false
-    })
+    .then(() => btn.textContent = 'Added!')
+    .catch(() => { btn.textContent = 'Error'; btn.disabled = false })
 }
 
-// initial fetch & setup loopItems
-onMounted(async () => {
-  try {
-    const res = await fetch(
-      `https://fakestoreapi.com/products/category/${props.category}`
-    )
-    const data = await res.json()
-    items.value = data
-    // prepare infinite loop sequence
-    const head = data.slice(0, props.visibleCount)
-    const tail = data.slice(-props.visibleCount)
-    loopItems.value = [...tail, ...data, ...head]
-    // wait for DOM to update
-    await nextTick()
-    updateTransform()
-  } catch (err) {
-    console.error('Failed to fetch products', err)
-  }
+// open product in new tab
+function openProduct(p) {
+  const url = `https://fakestoreapi.com/products/${p.id}`
+  window.open(url, '_blank')
+}
+
+// handle tab change
+function changeCategory(val) {
+  if (val === currentCategory.value) return
+  currentCategory.value = val
+}
+
+// watch for category changes
+watch(currentCategory, (newCat) => {
+  fetchProducts(newCat)
+})
+
+// initial load
+onMounted(() => {
+  fetchProducts(currentCategory.value)
 })
 </script>
 
 <style scoped>
 .wrapper {
   position: relative;
-  font-family: 'Inter', sans-serif;
-}
-.box {
-  --gap: 16px;
-  --visible: 5;
+  width: 400px;
+  background: #fafafa;
+  border-radius: 8px;
   overflow: hidden;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  position: relative;
-}
-/* edge fade overlays */
-.box::before,
-.box::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: calc((100% - (100% - (var(--visible) - 1) * var(--gap))) / 2);
-  pointer-events: none;
-  z-index: 5;
-}
-.box::before {
-  left: 0;
-  background: linear-gradient(to right, #fff, transparent);
-}
-.box::after {
-  right: 0;
-  background: linear-gradient(to left, #fff, transparent);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: auto;
 }
 
-.items {
+/* HEADER */
+.widget-header {
   display: flex;
-  gap: var(--gap);
-}
-
-.item {
-  flex: 0 0
-    calc((100% - (var(--visible) - 1) * var(--gap)) / var(--visible));
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  padding: 20px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
 }
-
-.item img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 8px;
+.logo {
+  font-size: 18px;
+  font-weight: bold;
 }
-
-.info {
-  text-align: center;
+.widget-menu {
+  display: flex;
+  gap: 4px;
 }
-
-.info h4 {
-  font-size: 14px;
-  margin: 0 0 4px;
-  color: #111;
-  height: 32px;
-  overflow: hidden;
-}
-
-.info p {
-  font-size: 13px;
-  margin: 0;
-  color: #666;
-}
-
-.btn {
-  margin-top: 8px;
-  padding: 6px 12px;
-  font-size: 13px;
+.menu-item {
+  padding: 6px 10px;
+  background: none;
   border: none;
-  border-radius: 4px;
-  background: #0070f3;
-  color: #fff;
+  font-size: 14px;
+  color: #555;
   cursor: pointer;
-  transition: background 0.2s;
+  border-bottom: 2px solid transparent;
+  transition: color .2s, border-color .2s;
 }
-.btn:hover {
-  background: #0055aa;
+.menu-item.active {
+  color: #0070f3;
+  border-color: #0070f3;
 }
 
+/* CAROUSEL */
 .nav {
   position: absolute;
-  top: 50%;
+  top: calc(50% + 16px);
   transform: translateY(-50%);
+  background: transparent;
+  border: none;
   width: 32px;
   height: 32px;
-  border: none;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 32px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 10;
+  cursor: pointer;
+  transition: background .2s;
 }
-.nav.prev {
-  left: 8px;
+.nav.prev { left: -4px; }
+.nav.next { right: -4px; }
+
+.viewport {
+  width: 400px;
+  height: 500px;
+  overflow: hidden;
+  position: relative;
 }
-.nav.next {
-  right: 8px;
+.track {
+  display: flex;
 }
+.slide {
+  flex: 0 0 400px;
+  height: 500px;
+  box-sizing: border-box;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover {
+  width: 100%;
+  height: 60%;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.title {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 4px;
+}
+.price {
+  font-size: 16px;
+  color: #0070f3;
+  margin-bottom: 12px;
+}
+.btn {
+  padding: 8px 16px;
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn:hover { background: #005bb5; }
+.btn:disabled { background: #aaa; cursor: default; }
 </style>
