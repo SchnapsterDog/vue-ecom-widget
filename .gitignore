@@ -1,10 +1,13 @@
 # Node dependencies
 node_modules/
+test-results/
 
 # Build output
 build/
 dist/
 dist
+
+
 
 # Local dev servers
 *.local
