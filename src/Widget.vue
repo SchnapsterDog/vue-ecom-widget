@@ -2,7 +2,7 @@
   <div class="wrapper">
     <!-- HEADER WITH TABS -->
     <header class="widget-header">
-      <div class="logo">Logo</div>
+      <div class="logo">Newest Logo</div>
       <nav class="widget-menu">
         <button
           v-for="tab in tabs"
